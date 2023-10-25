@@ -79,6 +79,7 @@ class FanSpeedIndicator extends SystemIndicator {
         super();
 
         this._indicator = this._addIndicator();
+        this._indicator.visible = false;
 
         const toggle = new FanSpeedToggle();
         this.quickSettingsItems.push(toggle);
