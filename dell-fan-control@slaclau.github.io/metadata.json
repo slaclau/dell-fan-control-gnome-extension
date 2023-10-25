@@ -1,0 +1,8 @@
+{
+  "name": "Dell Bios Fan Control",
+  "description": "Control BIOS fan mode on dell laptop",
+  "uuid": "dell-fan-control@slaclau.github.io",
+  "shell-version": [
+    "45"
+  ]
+}
