@@ -1,0 +1,1 @@
+A polkit actions file is required for this extension to work, it can be downloaded from [here](https://github.com/razman786/i8kgui/blob/master/i8kgui/polkit_actions/ubuntu/com.ubuntu.pkexec.smbios-thermal-ctl.policy) and it should be installed to `/usr/share/polkit-1/actions`. The path to `smbios-thermal-ctl` will need to be updated for your system.
