@@ -16,6 +16,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -28,18 +29,19 @@ import {getSupportedModes, setModeTo, getMode} from './services/fanControl.js';
 
 const FanSpeedToggle = GObject.registerClass(
 class FanSpeedToggle extends QuickMenuToggle {
-    constructor() {
+    constructor(indicator) {
         super({
             title: _('Fan mode'),
             subtitle: getMode(),
             iconName: 'temperature-symbolic',
             toggleMode: true,
         });
-
+        this._indicator = indicator;
         this.menu.setHeader('temperature-symbolic', _('Fan Mode'));
         this._menuButton.connect('clicked', () => this._update());
         this._itemsSection = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._itemsSection);
+        this._updateChecks();
     }
 
     _update() {
@@ -69,6 +71,39 @@ class FanSpeedToggle extends QuickMenuToggle {
                ? PopupMenu.Ornament.CHECK
                : PopupMenu.Ornament.NONE);
         }
+        let icon_name
+        switch (this.subtitle) {
+            case 'Performance':
+                icon_name = 'power-profile-performance-symbolic'
+                this._indicator.icon_name = icon_name;
+                this.menu.setHeader(icon_name, _('Fan Mode'));
+                this.iconName = icon_name;
+                break;
+            case 'Balanced':
+                icon_name = 'power-profile-balanced-symbolic'
+                this._indicator.icon_name = icon_name;
+                this.menu.setHeader(icon_name, _('Fan Mode'));
+                this.iconName = icon_name;
+                break;
+            case 'Quiet':
+                icon_name = 'power-profile-power-saver-symbolic'
+                this._indicator.icon_name = icon_name;
+                this.menu.setHeader(icon_name, _('Fan Mode'));
+                this.iconName = icon_name;
+                break;
+            case 'Cool Bottom':
+                icon_name = 'weather-snow-symbolic'
+                this._indicator.icon_name = icon_name;
+                this.menu.setHeader(icon_name, _('Fan Mode'));
+                this.iconName = icon_name;
+                break;
+            default:
+                let extensionObject = Extension.lookupByUUID('dell-fan-control@slaclau.github.io');
+                this._indicator.gicon = Gio.icon_new_for_string(extensionObject.path + '/fan-symbolic.svg')
+                break;
+
+        }
+
         return this.subtitle;
     }
 });
@@ -79,21 +114,34 @@ class FanSpeedIndicator extends SystemIndicator {
         super();
 
         this._indicator = this._addIndicator();
-        this._indicator.visible = false;
 
-        const toggle = new FanSpeedToggle();
+        const toggle = new FanSpeedToggle(this._indicator);
         this.quickSettingsItems.push(toggle);
+    }
+});
+
+const DummyIndicator = GObject.registerClass(
+class DummyIndicator extends SystemIndicator {
+    constructor() {
+        super();
+
+        this._indicator = this._addIndicator();
+        let extensionObject = Extension.lookupByUUID('dell-fan-control@slaclau.github.io');
+        this._indicator.gicon = Gio.icon_new_for_string(extensionObject.path + '/fan-symbolic.svg')
     }
 });
 
 export default class FanSpeedExtension extends Extension {
     enable() {
         this._indicator = new FanSpeedIndicator();
+        this._dummyIndicator = new DummyIndicator();
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._dummyIndicator);
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
     }
 
     disable() {
         this._indicator.quickSettingsItems.forEach(item => item.destroy());
         this._indicator.destroy();
+        this._dummyIndicator.destroy();
     }
 }
